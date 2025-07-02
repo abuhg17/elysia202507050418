@@ -1,5 +1,4 @@
 import { Elysia } from "elysia"
-
 import axios from "axios"
 import { initializeApp } from "firebase/app"
 import { getFirestore, collection, getDocs } from "firebase/firestore"
@@ -16,18 +15,15 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig)
 const db = getFirestore(firebaseApp)
-
 const youtubeApiKey = "AIzaSyAUD7ipwX-VAIIgbtw4V6sHKOTfyWoPdMo"
 
 const app = new Elysia()
 
-// 保留首頁路由
 app.get("/", (ctx) => {
   ctx.headers['Content-Type'] = "text/plain; charset=utf-8"
   return "Hello Elysia"
 })
 
-// 所有 API 掛在 /api 下
 app.group("/api", (app) => {
   app.get("/hello", (ctx) => {
     ctx.headers['Content-Type'] = "application/json; charset=utf-8"
@@ -71,6 +67,9 @@ app.group("/api", (app) => {
           id: channelIds.join(","),
           key: youtubeApiKey,
         },
+        headers: {
+          "Accept-Encoding": "gzip, deflate", // ✅ 修正 Brotli
+        },
       })
 
       const items = res.data?.items || []
@@ -100,6 +99,9 @@ app.group("/api", (app) => {
           part: "snippet,statistics",
           id: videoIds.join(","),
           key: youtubeApiKey,
+        },
+        headers: {
+          "Accept-Encoding": "gzip, deflate", // ✅ 修正 Brotli
         },
       })
 
@@ -156,6 +158,10 @@ app.group("/api", (app) => {
     try {
       const res = await axios.get("https://api.bilibili.com/x/web-interface/view", {
         params: { bvid },
+        headers: {
+          Referer: "https://www.bilibili.com/",
+          "Accept-Encoding": "gzip, deflate", // ✅ 修正 Brotli
+        },
       })
 
       const { pic, title, owner, stat, pages } = res.data.data
@@ -186,7 +192,10 @@ app.group("/api", (app) => {
     try {
       const response = await axios.get(url, {
         responseType: "stream",
-        headers: { Referer: "https://www.bilibili.com/" },
+        headers: {
+          Referer: "https://www.bilibili.com/",
+          "Accept-Encoding": "gzip, deflate", // ✅ 修正 Brotli
+        },
       })
 
       ctx.headers["Content-Type"] = response.headers["content-type"] || "application/octet-stream"
